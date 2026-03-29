@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gringo Dad Book Club</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 1rem 1rem;
+            background: linear-gradient(135deg, #16213e, #0f3460);
+            border-bottom: 3px solid #e94560;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            color: #a0a0b8;
+            margin-top: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .status-bar {
+            text-align: center;
+            padding: 0.75rem 1rem;
+            background: #16213e;
+            font-size: 0.85rem;
+            color: #a0a0b8;
+            border-bottom: 1px solid #2a2a4a;
+        }
+
+        .status-bar.voted {
+            background: #0a2e1a;
+            color: #4caf50;
+        }
+
+        .books {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .book {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            transition: transform 0.15s, box-shadow 0.15s;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .book:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .book.selected {
+            border-color: #e94560;
+            background: #1e2a4a;
+        }
+
+        .book-cover {
+            width: 60px;
+            height: 90px;
+            border-radius: 4px;
+            object-fit: cover;
+            background: #2a2a4a;
+            flex-shrink: 0;
+        }
+
+        .book-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .book-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.2rem;
+        }
+
+        .book-author {
+            font-size: 0.85rem;
+            color: #a0a0b8;
+            margin-bottom: 0.4rem;
+        }
+
+        .book-link {
+            font-size: 0.8rem;
+            color: #e94560;
+            text-decoration: none;
+        }
+
+        .book-link:hover {
+            text-decoration: underline;
+        }
+
+        .vote-radio {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #4a4a6a;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.15s;
+        }
+
+        .book.selected .vote-radio {
+            border-color: #e94560;
+        }
+
+        .book.selected .vote-radio::after {
+            content: '';
+            width: 12px;
+            height: 12px;
+            background: #e94560;
+            border-radius: 50%;
+        }
+
+        .vote-section {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .vote-btn {
+            width: 100%;
+            padding: 1rem;
+            background: #e94560;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, opacity 0.15s;
+        }
+
+        .vote-btn:hover {
+            background: #d63851;
+        }
+
+        .vote-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .vote-btn.submitted {
+            background: #4caf50;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: #16213e;
+            border: 2px solid #2a2a4a;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .name-input:focus {
+            border-color: #e94560;
+        }
+
+        .name-input::placeholder {
+            color: #5a5a7a;
+        }
+
+        .suggest-section {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 1rem 2rem;
+        }
+
+        .suggest-toggle {
+            width: 100%;
+            padding: 0.7rem;
+            background: transparent;
+            border: 1px solid #2a2a4a;
+            border-radius: 12px;
+            color: #a0a0b8;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        .suggest-toggle:hover {
+            border-color: #4a4a6a;
+            color: #e0e0e0;
+        }
+
+        .suggest-form {
+            display: none;
+            margin-top: 0.75rem;
+        }
+
+        .suggest-form.open {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .suggest-form input {
+            padding: 0.7rem 1rem;
+            background: #16213e;
+            border: 2px solid #2a2a4a;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .suggest-form input:focus {
+            border-color: #e94560;
+        }
+
+        .suggest-form input::placeholder {
+            color: #5a5a7a;
+        }
+
+        .suggest-btn {
+            padding: 0.7rem;
+            background: #0f3460;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .suggest-btn:hover {
+            background: #1a4a80;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: #4a4a6a;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Gringo Dad Book Club</h1>
+        <p id="poll-description">Vote for the next book</p>
+    </header>
+    <div class="status-bar" id="status-bar">Select a book and vote below</div>
+
+    <div class="books" id="books-list"></div>
+
+    <div class="vote-section">
+        <input type="text" class="name-input" id="voter-name" placeholder="Your name">
+        <button class="vote-btn" id="vote-btn" disabled>Vote</button>
+    </div>
+
+    <div class="suggest-section">
+        <button class="suggest-toggle" id="suggest-toggle">+ Suggest a book for next time</button>
+        <div class="suggest-form" id="suggest-form">
+            <input type="text" id="suggest-title" placeholder="Book title">
+            <input type="text" id="suggest-author" placeholder="Author">
+            <button class="suggest-btn" id="suggest-btn">Submit suggestion</button>
+        </div>
+    </div>
+
+    <footer>GDBC</footer>
+
+    <script>
+        // ============================================================
+        // CONFIGURATION - Edit this section to update books each month
+        // ============================================================
+        const CONFIG = {
+            // Replace with your Google Apps Script web app URL after setup
+            scriptUrl: 'https://script.google.com/macros/s/AKfycbwSm2Pmni6p-jqjygjVKV5ilLqnMb1a0u0lAW0HkbLzuvgCnU7rX3_bWjU83EZSh0jMAA/exec',
+
+            // Poll description shown at the top
+            pollDescription: 'Vote for the next book',
+
+            // Set to true to allow voting without the scriptUrl (for testing)
+            testMode: false,
+
+            // The books for this round
+            books: [
+                {
+                    title: 'Project Hail Mary',
+                    author: 'Andy Weir',
+                    goodreads: 'https://www.goodreads.com/book/show/54493401-project-hail-mary',
+                    cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1597695864i/54493401.jpg'
+                },
+                {
+                    title: 'Roadside Picnic',
+                    author: 'Arkady & Boris Strugatsky',
+                    goodreads: 'https://www.goodreads.com/book/show/331256.Roadside_Picnic',
+                    cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1452114889i/331256.jpg'
+                },
+                {
+                    title: 'The Left Hand of Darkness',
+                    author: 'Ursula K. Le Guin',
+                    goodreads: 'https://www.goodreads.com/book/show/18423.The_Left_Hand_of_Darkness',
+                    cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1488213612i/18423.jpg'
+                },
+                {
+                    title: 'Genghis Khan and the Making of the Modern World',
+                    author: 'Jack Weatherford',
+                    goodreads: 'https://www.goodreads.com/book/show/93426.Genghis_Khan_and_the_Making_of_the_Modern_World',
+                    cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1440801133i/93426.jpg'
+                }
+            ]
+        };
+
+        // ============================================================
+        // APP CODE - No need to edit below
+        // ============================================================
+        const VOTE_KEY = 'gdbc-voted-' + CONFIG.pollDescription;
+        let selectedBook = null;
+
+        function hasAlreadyVoted() {
+            return localStorage.getItem(VOTE_KEY) !== null;
+        }
+
+        function markAsVoted(bookTitle) {
+            localStorage.setItem(VOTE_KEY, bookTitle);
+        }
+
+        function showAlreadyVoted() {
+            const votedFor = localStorage.getItem(VOTE_KEY);
+            const status = document.getElementById('status-bar');
+            status.textContent = `You already voted for "${votedFor}"`;
+            status.classList.add('voted');
+
+            document.querySelectorAll('.book').forEach(b => {
+                b.style.pointerEvents = 'none';
+                b.style.opacity = '0.7';
+            });
+            document.getElementById('voter-name').style.display = 'none';
+            document.getElementById('vote-btn').textContent = 'Already voted';
+            document.getElementById('vote-btn').disabled = true;
+            document.getElementById('vote-btn').classList.add('submitted');
+        }
+
+        function render() {
+            document.getElementById('poll-description').textContent = CONFIG.pollDescription;
+
+            const list = document.getElementById('books-list');
+            list.innerHTML = '';
+
+            CONFIG.books.forEach((book, i) => {
+                const div = document.createElement('div');
+                div.className = 'book' + (selectedBook === i ? ' selected' : '');
+                div.innerHTML = `
+                    <img class="book-cover" src="${book.cover}" alt="${book.title}" onerror="this.style.display='none'">
+                    <div class="book-info">
+                        <div class="book-title">${book.title}</div>
+                        <div class="book-author">${book.author}</div>
+                        <a class="book-link" href="${book.goodreads}" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on Goodreads</a>
+                    </div>
+                    <div class="vote-radio"></div>
+                `;
+                div.addEventListener('click', () => {
+                    selectedBook = i;
+                    render();
+                });
+                list.appendChild(div);
+            });
+
+            document.getElementById('vote-btn').disabled = selectedBook === null;
+        }
+
+        // Vote submission
+        document.getElementById('vote-btn').addEventListener('click', async () => {
+            if (selectedBook === null) return;
+            if (hasAlreadyVoted()) return;
+
+            const btn = document.getElementById('vote-btn');
+            const book = CONFIG.books[selectedBook];
+            const name = document.getElementById('voter-name').value.trim() || 'Anonymous';
+
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            try {
+                if (CONFIG.scriptUrl) {
+                    await fetch(CONFIG.scriptUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            type: 'vote',
+                            book: book.title,
+                            voter: name,
+                            timestamp: new Date().toISOString()
+                        })
+                    });
+                } else if (!CONFIG.testMode) {
+                    throw new Error('Voting not configured yet');
+                }
+
+                markAsVoted(book.title);
+
+                btn.textContent = 'Vote submitted!';
+                btn.classList.add('submitted');
+
+                const status = document.getElementById('status-bar');
+                status.textContent = `You voted for "${book.title}"`;
+                status.classList.add('voted');
+
+                // Disable further interaction
+                document.querySelectorAll('.book').forEach(b => {
+                    b.style.pointerEvents = 'none';
+                    b.style.opacity = '0.7';
+                });
+                document.getElementById('voter-name').disabled = true;
+
+            } catch (err) {
+                btn.textContent = 'Error - try again';
+                btn.disabled = false;
+                console.error(err);
+            }
+        });
+
+        // Suggest a book
+        document.getElementById('suggest-toggle').addEventListener('click', () => {
+            document.getElementById('suggest-form').classList.toggle('open');
+        });
+
+        document.getElementById('suggest-btn').addEventListener('click', async () => {
+            const title = document.getElementById('suggest-title').value.trim();
+            const author = document.getElementById('suggest-author').value.trim();
+            if (!title) return;
+
+            const btn = document.getElementById('suggest-btn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            try {
+                if (CONFIG.scriptUrl) {
+                    await fetch(CONFIG.scriptUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            type: 'suggestion',
+                            title: title,
+                            author: author,
+                            timestamp: new Date().toISOString()
+                        })
+                    });
+                }
+
+                btn.textContent = 'Submitted!';
+                document.getElementById('suggest-title').value = '';
+                document.getElementById('suggest-author').value = '';
+
+            } catch (err) {
+                btn.textContent = 'Error - try again';
+                btn.disabled = false;
+            }
+        });
+
+        render();
+        if (hasAlreadyVoted()) {
+            showAlreadyVoted();
+        }
+    </script>
+</body>
+</html>
