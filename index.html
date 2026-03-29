@@ -281,7 +281,7 @@
     <div class="books" id="books-list"></div>
 
     <div class="vote-section">
-        <input type="text" class="name-input" id="voter-name" placeholder="Your name">
+        <input type="text" class="name-input" id="voter-name" placeholder="Your name (required)">
         <button class="vote-btn" id="vote-btn" disabled>Vote</button>
     </div>
 
@@ -394,8 +394,15 @@
                 list.appendChild(div);
             });
 
-            document.getElementById('vote-btn').disabled = selectedBook === null;
+            const name = document.getElementById('voter-name').value.trim();
+            document.getElementById('vote-btn').disabled = selectedBook === null || !name;
         }
+
+        // Re-evaluate button state when name changes
+        document.getElementById('voter-name').addEventListener('input', () => {
+            const name = document.getElementById('voter-name').value.trim();
+            document.getElementById('vote-btn').disabled = selectedBook === null || !name;
+        });
 
         // Vote submission
         document.getElementById('vote-btn').addEventListener('click', async () => {
@@ -404,7 +411,8 @@
 
             const btn = document.getElementById('vote-btn');
             const book = CONFIG.books[selectedBook];
-            const name = document.getElementById('voter-name').value.trim() || 'Anonymous';
+            const name = document.getElementById('voter-name').value.trim();
+            if (!name) return;
 
             btn.disabled = true;
             btn.textContent = 'Submitting...';
