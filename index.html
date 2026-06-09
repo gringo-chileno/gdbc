@@ -432,6 +432,17 @@
         let firstChoice = null;
         let secondChoice = null;
 
+        // Shown when a cover URL fails to load (e.g. Amazon 403s an image), so the
+        // row keeps its shape instead of going blank. Matches the "show a placeholder,
+        // don't hide" approach used elsewhere.
+        const COVER_FALLBACK = 'data:image/svg+xml,' + encodeURIComponent(
+            "<svg xmlns='http://www.w3.org/2000/svg' width='60' height='90'>" +
+            "<rect width='60' height='90' rx='4' fill='#2a2a4a'/>" +
+            "<rect x='18' y='28' width='24' height='34' rx='2' fill='none' stroke='#8080a0' stroke-width='2'/>" +
+            "<line x1='30' y1='28' x2='30' y2='62' stroke='#8080a0' stroke-width='2'/>" +
+            "</svg>"
+        );
+
         function hasAlreadyVoted() {
             return localStorage.getItem(VOTE_KEY) !== null;
         }
@@ -481,7 +492,7 @@
                 if (secondChoice === i) cls += ' second';
                 div.className = cls;
                 div.innerHTML = `
-                    <img class="book-cover" src="${book.cover}" alt="${book.title}" onerror="this.style.display='none'">
+                    <img class="book-cover" src="${book.cover}" alt="${book.title}" onerror="this.onerror=null; this.src=COVER_FALLBACK">
                     <div class="book-info">
                         <div class="book-title">${book.title}</div>
                         <div class="book-author">${book.author}</div>
