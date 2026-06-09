@@ -146,7 +146,8 @@
         .rank-header {
             max-width: 600px;
             margin: 0 auto;
-            padding: 0.5rem 1rem 0;
+            /* right pad = .books padding (1rem) + .book border (2px) + .book padding (1rem) so labels sit over the radios */
+            padding: 0.5rem calc(2rem + 2px) 0;
             display: flex;
             justify-content: flex-end;
         }
