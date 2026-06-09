@@ -69,7 +69,7 @@
             align-items: center;
             transition: transform 0.15s, box-shadow 0.15s;
             border: 2px solid transparent;
-            cursor: pointer;
+            cursor: default;
         }
 
         .book:hover {
@@ -141,6 +141,81 @@
             height: 12px;
             background: #e94560;
             border-radius: 50%;
+        }
+
+        .rank-header {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0.5rem 1rem 0;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .rank-header .col {
+            width: 48px;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #c8c8d8;
+        }
+
+        .ranks {
+            display: flex;
+            flex-shrink: 0;
+        }
+
+        .rank-cell {
+            width: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rank-radio {
+            width: 26px;
+            height: 26px;
+            border: 2px solid #8080a0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+
+        .rank-radio.first.active {
+            border-color: #e94560;
+        }
+
+        .rank-radio.first.active::after {
+            content: '';
+            width: 13px;
+            height: 13px;
+            background: #e94560;
+            border-radius: 50%;
+        }
+
+        .rank-radio.second.active {
+            border-color: #f5a623;
+        }
+
+        .rank-radio.second.active::after {
+            content: '';
+            width: 13px;
+            height: 13px;
+            background: #f5a623;
+            border-radius: 50%;
+        }
+
+        .book.first {
+            border-color: #e94560;
+            background: #1e2a4a;
+        }
+
+        .book.second {
+            border-color: #f5a623;
+            background: #1e2a4a;
         }
 
         .vote-section {
@@ -276,8 +351,12 @@
         <h1>Gringo Dads Book Club</h1>
         <p id="poll-description">Vote for the next book</p>
     </header>
-    <div class="status-bar" id="status-bar">Select a book and vote below</div>
+    <div class="status-bar" id="status-bar">Pick your 1st and 2nd choice</div>
 
+    <div class="rank-header">
+        <div class="col">1st</div>
+        <div class="col">2nd</div>
+    </div>
     <div class="books" id="books-list"></div>
 
     <div class="vote-section">
@@ -305,7 +384,7 @@
             scriptUrl: 'https://script.google.com/macros/s/AKfycbwSm2Pmni6p-jqjygjVKV5ilLqnMb1a0u0lAW0HkbLzuvgCnU7rX3_bWjU83EZSh0jMAA/exec',
 
             // Poll description shown at the top
-            pollDescription: 'June 2026 vote',
+            pollDescription: 'June 2026 runoff (1st + 2nd choice)',
 
             // Set to true to allow voting without the scriptUrl (for testing)
             testMode: false,
@@ -349,20 +428,33 @@
         // APP CODE - No need to edit below
         // ============================================================
         const VOTE_KEY = 'gdbc-voted-' + CONFIG.pollDescription;
-        let selectedBook = null;
+        let firstChoice = null;
+        let secondChoice = null;
 
         function hasAlreadyVoted() {
             return localStorage.getItem(VOTE_KEY) !== null;
         }
 
-        function markAsVoted(bookTitle) {
-            localStorage.setItem(VOTE_KEY, bookTitle);
+        function markAsVoted(first, second) {
+            localStorage.setItem(VOTE_KEY, JSON.stringify({ first: first, second: second }));
+        }
+
+        function getVotedChoices() {
+            try {
+                return JSON.parse(localStorage.getItem(VOTE_KEY));
+            } catch (e) {
+                return null;
+            }
         }
 
         function showAlreadyVoted() {
-            const votedFor = localStorage.getItem(VOTE_KEY);
+            const choices = getVotedChoices();
             const status = document.getElementById('status-bar');
-            status.textContent = `You already voted for "${votedFor}"`;
+            if (choices && choices.first) {
+                status.textContent = `You voted: 1st "${choices.first}", 2nd "${choices.second}"`;
+            } else {
+                status.textContent = 'You already voted';
+            }
             status.classList.add('voted');
 
             document.querySelectorAll('.book').forEach(b => {
@@ -383,7 +475,10 @@
 
             CONFIG.books.forEach((book, i) => {
                 const div = document.createElement('div');
-                div.className = 'book' + (selectedBook === i ? ' selected' : '');
+                let cls = 'book';
+                if (firstChoice === i) cls += ' first';
+                if (secondChoice === i) cls += ' second';
+                div.className = cls;
                 div.innerHTML = `
                     <img class="book-cover" src="${book.cover}" alt="${book.title}" onerror="this.style.display='none'">
                     <div class="book-info">
@@ -391,32 +486,55 @@
                         <div class="book-author">${book.author}</div>
                         <a class="book-link" href="${book.goodreads}" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on Goodreads</a>
                     </div>
-                    <div class="vote-radio"></div>
+                    <div class="ranks">
+                        <div class="rank-cell"><div class="rank-radio first ${firstChoice === i ? 'active' : ''}" data-rank="first" data-i="${i}"></div></div>
+                        <div class="rank-cell"><div class="rank-radio second ${secondChoice === i ? 'active' : ''}" data-rank="second" data-i="${i}"></div></div>
+                    </div>
                 `;
-                div.addEventListener('click', () => {
-                    selectedBook = i;
-                    render();
-                });
                 list.appendChild(div);
             });
 
-            const name = document.getElementById('voter-name').value.trim();
-            document.getElementById('vote-btn').disabled = selectedBook === null || !name;
+            list.querySelectorAll('.rank-radio').forEach(radio => {
+                radio.addEventListener('click', () => {
+                    const i = parseInt(radio.dataset.i, 10);
+                    if (radio.dataset.rank === 'first') {
+                        firstChoice = (firstChoice === i) ? null : i;
+                        if (secondChoice === i) secondChoice = null;
+                    } else {
+                        secondChoice = (secondChoice === i) ? null : i;
+                        if (firstChoice === i) firstChoice = null;
+                    }
+                    render();
+                });
+            });
+
+            updateStatusAndButton();
         }
 
-        // Re-evaluate button state when name changes
-        document.getElementById('voter-name').addEventListener('input', () => {
+        function updateStatusAndButton() {
             const name = document.getElementById('voter-name').value.trim();
-            document.getElementById('vote-btn').disabled = selectedBook === null || !name;
-        });
+            document.getElementById('vote-btn').disabled =
+                firstChoice === null || secondChoice === null || !name;
+
+            const status = document.getElementById('status-bar');
+            if (!status.classList.contains('voted')) {
+                const firstTitle = firstChoice !== null ? CONFIG.books[firstChoice].title : '—';
+                const secondTitle = secondChoice !== null ? CONFIG.books[secondChoice].title : '—';
+                status.textContent = `1st: ${firstTitle}     2nd: ${secondTitle}`;
+            }
+        }
+
+        // Re-evaluate status and button state when name changes
+        document.getElementById('voter-name').addEventListener('input', updateStatusAndButton);
 
         // Vote submission
         document.getElementById('vote-btn').addEventListener('click', async () => {
-            if (selectedBook === null) return;
+            if (firstChoice === null || secondChoice === null) return;
             if (hasAlreadyVoted()) return;
 
             const btn = document.getElementById('vote-btn');
-            const book = CONFIG.books[selectedBook];
+            const first = CONFIG.books[firstChoice];
+            const second = CONFIG.books[secondChoice];
             const name = document.getElementById('voter-name').value.trim();
             if (!name) return;
 
@@ -431,7 +549,8 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             type: 'vote',
-                            book: book.title,
+                            first: first.title,
+                            second: second.title,
                             voter: name,
                             timestamp: new Date().toISOString()
                         })
@@ -440,13 +559,13 @@
                     throw new Error('Voting not configured yet');
                 }
 
-                markAsVoted(book.title);
+                markAsVoted(first.title, second.title);
 
                 btn.textContent = 'Vote submitted!';
                 btn.classList.add('submitted');
 
                 const status = document.getElementById('status-bar');
-                status.textContent = `You voted for "${book.title}"`;
+                status.textContent = `You voted: 1st "${first.title}", 2nd "${second.title}"`;
                 status.classList.add('voted');
 
                 // Disable further interaction

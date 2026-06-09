@@ -7,7 +7,10 @@ function doPost(e) {
 
   if (data.type === 'vote') {
     var sheet = ss.getSheetByName('Votes');
-    sheet.appendRow([data.timestamp, data.book, data.voter]);
+    // Supports the new 1st + 2nd ballot, and falls back to the old single-book payload.
+    var first = data.first || data.book || '';
+    var second = data.second || '';
+    sheet.appendRow([data.timestamp, first, second, data.voter]);
   } else if (data.type === 'suggestion') {
     var sheet = ss.getSheetByName('Suggestions');
     sheet.appendRow([data.timestamp, data.title, data.author]);
@@ -28,7 +31,7 @@ function getOrCreateSheet() {
 
   var votesSheet = ss.getActiveSheet();
   votesSheet.setName('Votes');
-  votesSheet.appendRow(['Timestamp', 'Book', 'Voter']);
+  votesSheet.appendRow(['Timestamp', 'First Choice', 'Second Choice', 'Voter']);
 
   var suggestionsSheet = ss.insertSheet('Suggestions');
   suggestionsSheet.appendRow(['Timestamp', 'Title', 'Author']);
