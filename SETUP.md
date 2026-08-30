@@ -14,16 +14,25 @@ This receives votes and writes them to a Google Sheet.
 8. Click **Deploy** and copy the URL
 9. Paste the URL into `index.html` where it says `scriptUrl: ''`
 
-## 2. GitHub Pages
+## 2. Hosting (Spacefast)
 
-1. Create a repo called `gdbc` on the `gringo-chileno` GitHub account
-2. Push the `index.html` file
-3. Go to repo Settings > Pages > Source: main branch
-4. Your site will be at `gringo-chileno.github.io/gdbc`
+The live page is https://gringodadsbookclub.view.fast/ and it serves the `site/` folder.
+
+Republish after any edit:
+
+```
+sf publish site -m "what changed"
+```
+
+The space is `spc_2be2c6d999564ee8bd1068335e5d3f0d` on team `rob-team`. It already has a
+public web viewer grant, so no extra step is needed after republishing.
+
+The old GitHub Pages address, `gringo-chileno.github.io/gdbc`, now serves a redirect
+page at the repo root so old WhatsApp links still land in the right place.
 
 ## 3. Updating books each month
 
-Edit the `CONFIG.books` array in `index.html`. Each book needs:
+Edit the `CONFIG.books` array in `site/index.html`. Each book needs:
 - `title` - book title
 - `author` - author name
 - `goodreads` - link to Goodreads page
